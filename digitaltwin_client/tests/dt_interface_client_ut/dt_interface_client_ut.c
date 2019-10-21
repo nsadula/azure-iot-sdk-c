@@ -893,7 +893,7 @@ static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_bind_DT_interface()
 {
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface();
 
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
 
     umock_c_reset_all_calls();
@@ -907,7 +907,7 @@ static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_bind_DT_interface_w
 {
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
 
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
 
     umock_c_reset_all_calls();
@@ -921,7 +921,7 @@ static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interfa
 {
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface();
 
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
 
     DT_InterfaceClient_RegistrationCompleteCallback(h, DIGITALTWIN_CLIENT_OK);
@@ -933,11 +933,11 @@ static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interfa
 
 // test_allocate_and_register_DT_interface_with_callbacks performs the required processing for creating a DIGITALTWIN_INTERFACE_CLIENT_HANDLE and connecting
 // it to a (unit test) clientCore handle and also simulating its registration.  Interface is able to use the handle at this point.
-static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interface_with_callbacks()
+static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interface_with_callbacks(bool isDefaultComponent)
 {
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
 
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, isDefaultComponent,  &testLockThreadBinding);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
 
     DT_InterfaceClient_RegistrationCompleteCallback(h, DIGITALTWIN_CLIENT_OK);
@@ -1199,7 +1199,24 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_ok)
     set_expected_calls_for_DT_InterfaceClient_BindToClientHandle();
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
+
+    //assert
+    ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    test_free_bound_interface_handle(h);
+}
+
+TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_AsDefaultComponent_ok)
+{
+    //arrange
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
+    set_expected_calls_for_DT_InterfaceClient_BindToClientHandle();
+
+    //act
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, true, &testLockThreadBinding);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
@@ -1214,7 +1231,7 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_NULL_interface_fails)
     //arrange
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(NULL, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(NULL, testDTClientCoreHandle, false, &testLockThreadBinding);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
@@ -1227,7 +1244,7 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_NULL_client_core_fails)
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, NULL, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, NULL, false, &testLockThreadBinding);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
@@ -1243,7 +1260,7 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_NULL_lock_binding_fails)
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, NULL);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, NULL);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
@@ -1258,14 +1275,14 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_already_bound_fails)
     //arrange
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
 
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
 
     umock_c_reset_all_calls();
 
     //act
     // Since the initial call to DT_InterfaceClient_BindToClientHandle() already bound us, this one should fail.
-    result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR, result);
@@ -1295,7 +1312,7 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_fail)
             umock_c_negative_tests_fail_call(i);
 
             //act
-            DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+            DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, false, &testLockThreadBinding);
 
             //assert
             ASSERT_ARE_NOT_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result, "Failure in test %lu", (unsigned long)i);
@@ -1312,15 +1329,14 @@ TEST_FUNCTION(DT_InterfaceClient_BindToClientHandle_fail)
 // DT_InterfaceClient_CreateTelemetryMessage
 ///////////////////////////////////////////////////////////////////////////////
 
-static void set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(bool includeInterfaceId, bool telemetryName)
+static void set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(bool includeInterfaceId, bool includeComponentName)
 {
     STRICT_EXPECTED_CALL(IoTHubMessage_CreateFromByteArray(IGNORED_PTR_ARG, IGNORED_NUM_ARG));
     if (includeInterfaceId)
     {
         STRICT_EXPECTED_CALL(IoTHubMessage_SetProperty(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     }
-    STRICT_EXPECTED_CALL(IoTHubMessage_SetProperty(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    if (telemetryName)
+    if (includeComponentName)
     {
         STRICT_EXPECTED_CALL(IoTHubMessage_SetProperty(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     }
@@ -1334,7 +1350,7 @@ TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_no_interfaceId_ok)
     set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(false, true);
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(NULL, DT_TEST_COMPONENT_NAME_1,  dtTestTelemetryName, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(NULL, DT_TEST_COMPONENT_NAME_1, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
@@ -1345,47 +1361,14 @@ TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_no_interfaceId_ok)
     my_IoTHubMessage_Destroy(messageHandle);
 }
 
-TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_with_interfaceId_ok)
-{
-    //arrange
-    IOTHUB_MESSAGE_HANDLE messageHandle = NULL;
-    set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(true, true);
-
-    //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1,  dtTestTelemetryName, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
-
-    //assert
-    ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
-    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
-    ASSERT_IS_NOT_NULL(messageHandle);
-
-    //cleanup
-    my_IoTHubMessage_Destroy(messageHandle);
-}
-
-TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_NULL_ComponentName_fails)
-{
-    //arrange
-    IOTHUB_MESSAGE_HANDLE messageHandle = NULL;
-    
-    //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, NULL, dtTestTelemetryName, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
-
-    //assert
-    ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
-    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
-    ASSERT_IS_NULL(messageHandle);
-}
-
-
-TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_NULL_telemetry_name_ok)
+TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_NULL_ComponentName_ok)
 {
     //arrange
     IOTHUB_MESSAGE_HANDLE messageHandle = NULL;
     set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(true, false);
     
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1, NULL, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, NULL, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
@@ -1402,7 +1385,7 @@ TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_NULL_messageData_fails)
     IOTHUB_MESSAGE_HANDLE messageHandle = NULL;
     
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1, dtTestTelemetryName, NULL, 0, &messageHandle);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1, NULL, 0, &messageHandle);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
@@ -1413,7 +1396,7 @@ TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_NULL_messageData_fails)
 TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_NULL_messageHandle_fails)
 {
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1, dtTestTelemetryName, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, NULL);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, NULL);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
@@ -1440,7 +1423,7 @@ TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_fail)
             umock_c_negative_tests_fail_call(i);
 
             //act
-            DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1,  dtTestTelemetryName, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
+            DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceClient_CreateTelemetryMessage(DT_TEST_INTERFACE_ID_1, DT_TEST_COMPONENT_NAME_1,  (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, &messageHandle);
 
             //assert
             ASSERT_ARE_NOT_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result, "Failure in test %lu", (unsigned long)i);
@@ -1457,10 +1440,10 @@ TEST_FUNCTION(DT_InterfaceClient_CreateTelemetryMessage_fail)
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalTwin_InterfaceClient_SendTelemetryAsync
 ///////////////////////////////////////////////////////////////////////////////
-static void set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync()
+static void set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync(bool isDefaultComponent)
 {
     set_expected_calls_for_IsInterfaceRegisteredWithCloud();
-    set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(false, false);
+    set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(false, !isDefaultComponent);
     STRICT_EXPECTED_CALL(gballoc_calloc(IGNORED_NUM_ARG, IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(DT_ClientCoreSendTelemetryAsync(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(IoTHubMessage_Destroy(IGNORED_PTR_ARG));
@@ -1470,11 +1453,29 @@ static void set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsyn
 TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_ok)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
-    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
+    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync(false);
 
     //act
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_SendTelemetryAsync(h, (const unsigned char *)dtTestMessageData, dtTestMessageDataLen, testDTClientTelemetryConfirmationCallback, testDTClientSendTelemetryCallbackContext);
+
+    //assert
+    ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    test_free_bound_interface_handle(h);
+    free(clientCore_SendTelemetryAsync_userContext);
+}
+
+TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_as_default_component_ok)
+{
+    //arrange
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(true);
+    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync(true);
+
+    //act
+    DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_SendTelemetryAsync(h, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, testDTClientTelemetryConfirmationCallback, testDTClientSendTelemetryCallbackContext);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
@@ -1500,7 +1501,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_NULL_interface_hand
 TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_NULL_messageData_fails)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     STRICT_EXPECTED_CALL(IoTHubMessage_Destroy(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
 
@@ -1519,7 +1520,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_interface_not_bound
 {
     //arrange
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocateDT_interface_with_callbacks();
-    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync();
+    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync(false);
 
     //act
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_SendTelemetryAsync(h, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, testDTClientTelemetryConfirmationCallback, testDTClientSendTelemetryCallbackContext);
@@ -1536,7 +1537,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_interface_not_regis
 {
     //arrange
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_bind_DT_interface_with_callbacks();
-    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync();
+    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync(false);
 
     //act
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_SendTelemetryAsync(h, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, testDTClientTelemetryConfirmationCallback, testDTClientSendTelemetryCallbackContext);
@@ -1552,12 +1553,12 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_interface_not_regis
 TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_fail)
 {
     // arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     int negativeTestsInitResult = umock_c_negative_tests_init();
     ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
 
-    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync();
+    set_expected_calls_for_DigitalTwin_InterfaceClient_SendTelemetryAsync(false);
     umock_c_negative_tests_snapshot();
 
     size_t count = umock_c_negative_tests_call_count();
@@ -1584,7 +1585,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_SendTelemetryAsync_fail)
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalTwin_InterfaceClient_ReportPropertyAsync
 ///////////////////////////////////////////////////////////////////////////////
-static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(DIGITALTWIN_COMMAND_EXECUTE_CALLBACK dtCommandExecuteCallback)
+static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(DIGITALTWIN_COMMAND_EXECUTE_CALLBACK dtCommandExecuteCallback, bool isDefaultComponent)
 {
     DIGITALTWIN_CLIENT_RESULT result;
     DIGITALTWIN_INTERFACE_CLIENT_HANDLE h;
@@ -1600,7 +1601,7 @@ static DIGITALTWIN_INTERFACE_CLIENT_HANDLE test_allocate_and_register_DT_interfa
         ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
     }
 
-    result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, &testLockThreadBinding);
+    result = DT_InterfaceClient_BindToClientHandle(h, testDTClientCoreHandle, isDefaultComponent, &testLockThreadBinding);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
 
     DT_InterfaceClient_RegistrationCompleteCallback(h, DIGITALTWIN_CLIENT_OK);
@@ -1629,7 +1630,7 @@ static void test_initialize_propertyResponse(DIGITALTWIN_CLIENT_PROPERTY_RESPONS
 TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_specified_property_response_OK)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     set_expected_calls_for_DigitalTwin_InterfaceClient_ReportPropertyAsync();
 
     DIGITALTWIN_CLIENT_PROPERTY_RESPONSE propertyResponse;
@@ -1651,7 +1652,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_specified_property
 TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_NULL_property_response_OK)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     set_expected_calls_for_DigitalTwin_InterfaceClient_ReportPropertyAsync();
 
     //act
@@ -1685,7 +1686,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_NULL_interface_han
 TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_NULL_property_name_fails)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
 
     DIGITALTWIN_CLIENT_PROPERTY_RESPONSE propertyResponse;
@@ -1705,7 +1706,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_NULL_property_name
 TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_invalid_version_fails)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
 
     DIGITALTWIN_CLIENT_PROPERTY_RESPONSE propertyResponse;
@@ -1765,7 +1766,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_not_registered_fai
 TEST_FUNCTION(DigitalTwin_InterfaceClient_ReportPropertyAsync_fail)
 {
     // arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     DIGITALTWIN_CLIENT_PROPERTY_RESPONSE propertyResponse;
     test_initialize_propertyResponse(&propertyResponse);
@@ -1908,7 +1909,7 @@ TEST_FUNCTION(DT_InterfaceClient_CheckNameValid_name_too_long_fails)
 TEST_FUNCTION(DT_InterfaceClient_GetComponentName_ok)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     //act
     const char* result = DT_InterfaceClient_GetComponentName(h);
@@ -1971,7 +1972,7 @@ static void set_expected_calls_for_DT_InterfaceClient_UnbindFromClientHandle(boo
 TEST_FUNCTION(DigitalTwin_InterfaceClient_Destroy_no_commands_properties_ok)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(NULL);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(NULL, false);
 
     set_expected_calls_for_DT_InterfaceClient_UnbindFromClientHandle(false);
     DT_InterfaceClient_UnbindFromClientHandle(h);
@@ -1989,7 +1990,7 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_Destroy_no_commands_properties_ok)
 TEST_FUNCTION(DigitalTwin_InterfaceClient_Destroy_multiple_commands_properties_ok)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     set_expected_calls_for_DT_InterfaceClient_UnbindFromClientHandle(false);
     DT_InterfaceClient_UnbindFromClientHandle(h);
@@ -2211,7 +2212,7 @@ TEST_FUNCTION(DT_InterfaceClient_RegistrationCompleteCallback_fail)
 TEST_FUNCTION(DT_InterfaceClient_GetInterfaceId_ok)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     //act
     const char* result = DT_InterfaceClient_GetInterfaceId(h);
@@ -2337,7 +2338,7 @@ static void test_DT_InterfaceClient_ProcessTwinCallback(const char* testJson, si
 {
     printf("Testing twin Json <%s>\n", testJson);
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     set_expected_calls_for_DT_InterfaceClient_ProcessTwinCallback(twinCallbackInfo);
 
     //act
@@ -2562,7 +2563,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_three_properties_update_ful
 TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_invalid_json)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     dtTestPropertyUpdateTest = DT_TEST_PROPERTY_UPDATE_TEST_NO_REPORTED_EXPECTED;
 
     //act
@@ -2589,7 +2590,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_fail)
         true  // No reported properties are present
     };
 
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     set_expected_calls_for_DT_InterfaceClient_ProcessTwinCallback(&callbackInfo);
     umock_c_negative_tests_snapshot();
 
@@ -2629,7 +2630,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_NULL_handle_fails)
 TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_NULL_payload_fails)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     dtTestPropertyUpdateTest = DT_TEST_PROPERTY_UPDATE_TEST_NO_REPORTED_EXPECTED;
 
     //act
@@ -2645,7 +2646,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_NULL_payload_fails)
 TEST_FUNCTION(DT_InterfaceClient_ProcessTwinCallback_0_payloadLen_fails)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     dtTestPropertyUpdateTest = DT_TEST_PROPERTY_UPDATE_TEST_NO_REPORTED_EXPECTED;
 
     //act
@@ -2761,7 +2762,7 @@ static void testDT_VerifyCommandResponse(int expectedCommandMatchFunction, unsig
 static void test_DT_InterfaceClient_InvokeCommandIfSupported(DIGITALTWIN_COMMAND_EXECUTE_CALLBACK dtCommandExecuteCallback, DT_COMMAND_PROCESSOR_RESULT expectedResult, const char* methodName, int expectedCommandMatchFunction)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(dtCommandExecuteCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(dtCommandExecuteCallback, false);
     set_expected_calls_for_DT_InterfaceClient_InvokeCommandIfSupported(expectedCommandMatchFunction);
 
     if (expectedCommandMatchFunction == DT_TEST_EXPECTED_COMMAND_SYNC_CALLBACK_RETURNS_NULL_RESPONSE)
@@ -2827,7 +2828,7 @@ TEST_FUNCTION(test_DT_InterfaceClient_InvokeCommandIfSupported_malformed_command
 TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_method_name_fail)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
 
     //act
     unsigned char* response = NULL;
@@ -2847,7 +2848,7 @@ TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_method_name_fail)
 TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_response_fail)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
     const char* testCommandName = DT_TEST_BUILD_COMMAND_NAME(DT_TEST_COMPONENT_NAME_1, DT_TEST_COMMAND_NAME);
 
     //act
@@ -2868,7 +2869,7 @@ TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_response_fail)
 TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_response_len_fail)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
     const char* testCommandName = DT_TEST_BUILD_COMMAND_NAME(DT_TEST_COMPONENT_NAME_1, DT_TEST_COMMAND_NAME);
 
     //act
@@ -2889,7 +2890,7 @@ TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_response_len_fail
 TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_response_code_fail)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
     const char* testCommandName = DT_TEST_BUILD_COMMAND_NAME(DT_TEST_COMPONENT_NAME_1, DT_TEST_COMMAND_NAME);
 
     //act
@@ -2911,7 +2912,7 @@ TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_NULL_response_code_fai
 TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_fail)
 {
     // arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
     const char* testCommandName = DT_TEST_BUILD_COMMAND_NAME(DT_TEST_COMPONENT_NAME_1, DT_TEST_COMMAND_NAME);
 
     int negativeTestsInitResult = umock_c_negative_tests_init();
@@ -2948,12 +2949,12 @@ TEST_FUNCTION(DT_InterfaceClient_InvokeCommandIfSupported_fail)
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync
 ///////////////////////////////////////////////////////////////////////////////
-static void set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync()
+static void set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(bool isDefaultComponent)
 {
     set_expected_calls_for_IsInterfaceRegisteredWithCloud();
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)).CallCannotFail();
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)).CallCannotFail();
-    set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(false, true);
+    set_expected_calls_for_DT_InterfaceClient_CreateTelemetryMessage(false, !isDefaultComponent);
     STRICT_EXPECTED_CALL(IoTHubMessage_SetProperty(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(IoTHubMessage_SetProperty(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(IoTHubMessage_SetProperty(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
@@ -2967,7 +2968,7 @@ static void set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncComman
 static void testDT_UpdateAsyncCommandStatus_AsyncUpdateStruct_invalid(const DIGITALTWIN_CLIENT_ASYNC_COMMAND_UPDATE* dtClientAsyncCommandUpdate)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
     STRICT_EXPECTED_CALL(IoTHubMessage_Destroy(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
 
@@ -2999,12 +3000,33 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync_ok)
     DIGITALTWIN_CLIENT_ASYNC_COMMAND_UPDATE dtClientAsyncCommandUpdate;
     testDT_SetAsyncUpdate(&dtClientAsyncCommandUpdate);
 
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
-    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
+    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(false);
 
     //act
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(h, &dtClientAsyncCommandUpdate, NULL, NULL);
     
+    //assert
+    ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+    test_free_bound_interface_handle(h);
+    free(clientCore_SendTelemetryAsync_userContext);
+}
+
+TEST_FUNCTION(DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync_as_default_component_ok)
+{
+    //arrange
+    DIGITALTWIN_CLIENT_ASYNC_COMMAND_UPDATE dtClientAsyncCommandUpdate;
+    testDT_SetAsyncUpdate(&dtClientAsyncCommandUpdate);
+
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, true);
+    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(true);
+
+    //act
+    DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(h, &dtClientAsyncCommandUpdate, NULL, NULL);
+
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result);
     ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
@@ -3056,12 +3078,12 @@ TEST_FUNCTION(DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync_fail)
     // arrange
     DIGITALTWIN_CLIENT_ASYNC_COMMAND_UPDATE dtClientAsyncCommandUpdate;
     testDT_SetAsyncUpdate(&dtClientAsyncCommandUpdate);
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback);
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks_specifying_commands(testDTClientCommandCallback, false);
 
     int negativeTestsInitResult = umock_c_negative_tests_init();
     ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
 
-    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync();
+    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(false);
     umock_c_negative_tests_snapshot();
 
     size_t count = umock_c_negative_tests_call_count();
@@ -3098,7 +3120,7 @@ static void set_expected_calls_for_DT_InterfaceClient_ProcessTelemetryCallback(D
 static void test_DT_InterfaceClient_ProcessTelemetryCallback_for_telemetry_send(DIGITALTWIN_CLIENT_RESULT expectedDTSendTelemetryStatus)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     // Need to initiate a send telemetry so that there's a context to callback onto.
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_SendTelemetryAsync(h, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, testDTClientTelemetryConfirmationCallback, testDTClientSendTelemetryCallbackContext);
@@ -3122,13 +3144,13 @@ static void test_DT_InterfaceClient_ProcessTelemetryCallback_for_telemetry_send(
 static void test_DT_InterfaceClient_ProcessTelemetryCallback_for_callback_after_updateasync_command(DIGITALTWIN_CLIENT_RESULT expectedAsyncCommandCallbackResult)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     DIGITALTWIN_CLIENT_ASYNC_COMMAND_UPDATE dtClientAsyncCommandUpdate;
     testDT_SetAsyncUpdate(&dtClientAsyncCommandUpdate);
 
     // Need to initiate an update async command so that there's a context to callback onto.
-    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync();
+    set_expected_calls_for_DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(false);
 
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAsync(h, &dtClientAsyncCommandUpdate, testDTClientUpdateAsyncCallback, testDTClientUpdateAsyncCommandCallbackContext);
 
@@ -3190,7 +3212,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessTelemetryCallback_NULL_interface_handle_
 TEST_FUNCTION(DT_InterfaceClient_ProcessTelemetryCallback_NULL_user_context_succeeds)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
     STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
 
     //act
@@ -3207,7 +3229,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessTelemetryCallback_NULL_user_context_succ
 TEST_FUNCTION(DT_InterfaceClient_ProcessTelemetryCallback_fail)
 {
     // arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     // Need to initiate a send telemetry so that there's a context to callback onto.
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_SendTelemetryAsync(h, (const unsigned char*)dtTestMessageData, dtTestMessageDataLen, testDTClientTelemetryConfirmationCallback, testDTClientSendTelemetryCallbackContext);
@@ -3255,7 +3277,7 @@ static void set_expected_calls_for_DT_InterfaceClient_ProcessReportedPropertiesU
 static void test_DT_InterfaceClient_ProcessReportedPropertiesUpdateCallback(DIGITALTWIN_CLIENT_RESULT expectedDTReportedStatus)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     // Need to initiate a send telemetry so that there's a context to callback onto.
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_ReportPropertyAsync(h, DT_TEST_PROPERTY_NAME1, (const unsigned char*)DT_TEST_PROPERTY_REPORTED_VALUE1, strlen(DT_TEST_PROPERTY_REPORTED_VALUE1), NULL, testDTClientReportedPropertyCallback, dtClientReportedStatusCallbackContext);
@@ -3290,7 +3312,7 @@ TEST_FUNCTION(DT_InterfaceClient_ProcessReportedPropertiesUpdateCallback_caller_
 TEST_FUNCTION(DT_InterfaceClient_ProcessReportedPropertiesUpdateCallback_fail)
 {
     //arrange
-    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks();
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE h = test_allocate_and_register_DT_interface_with_callbacks(false);
 
     // Need to initiate a send telemetry so that there's a context to callback onto.
     DIGITALTWIN_CLIENT_RESULT result = DigitalTwin_InterfaceClient_ReportPropertyAsync(h, DT_TEST_PROPERTY_NAME1, (const unsigned char*)DT_TEST_PROPERTY_REPORTED_VALUE1, strlen(DT_TEST_PROPERTY_REPORTED_VALUE1), NULL, testDTClientReportedPropertyCallback, dtClientReportedStatusCallbackContext);

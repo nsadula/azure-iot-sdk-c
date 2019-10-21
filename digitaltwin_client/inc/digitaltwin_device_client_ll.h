@@ -63,7 +63,7 @@ MOCKABLE_FUNCTION(, DIGITALTWIN_CLIENT_RESULT, DigitalTwin_DeviceClient_LL_Creat
 
   @see DigitalTwin_DeviceClient_RegisterInterfacesAsync
 */
-MOCKABLE_FUNCTION(, DIGITALTWIN_CLIENT_RESULT, DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync, DIGITALTWIN_DEVICE_CLIENT_LL_HANDLE, dtDeviceClientHandle, const char*, deviceCapabilityModel, DIGITALTWIN_INTERFACE_CLIENT_HANDLE*, dtInterfaces, unsigned int, numDTInterfaces, DIGITALTWIN_INTERFACE_REGISTERED_CALLBACK, dtInterfaceRegisteredCallback, void*, userContextCallback);
+MOCKABLE_FUNCTION(, DIGITALTWIN_CLIENT_RESULT, DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync, DIGITALTWIN_DEVICE_CLIENT_LL_HANDLE, dtDeviceClientHandle, const char*, deviceCapabilityModel, DIGITALTWIN_INTERFACE_CLIENT_HANDLE*, dtInterfaces, unsigned int, numDTInterfaces, unsigned int, dtDefaultInterfaceIndex, DIGITALTWIN_INTERFACE_REGISTERED_CALLBACK, dtInterfaceRegisteredCallback, void*, userContextCallback);
 
 /**
   @brief    Invokes worker actions on <c>DIGITALTWIN_DEVICE_CLIENT_LL_HANDLE</c>

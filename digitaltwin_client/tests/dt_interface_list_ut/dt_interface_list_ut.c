@@ -145,7 +145,7 @@ static DIGITALTWIN_INTERFACE_CLIENT_HANDLE dtTestInterfaceArray[] = { DT_TEST_IN
 #define DT_TEST_BUILD_JSON_TUPLE(NAME, ID) "\"" NAME "\":\"" ID "\""
 
 #define DT_TEST_INTERFACE_MODEL_DISCOVERY_TUPLE DT_TEST_BUILD_JSON_TUPLE(DT_MODEL_DISCOVERY_INTERFACE_NAME, DT_MODEL_DISCOVERY_INTERFACE_ID)
-#define DT_TEST_SDK_INFORMATION_TUPLE DT_TEST_BUILD_JSON_TUPLE(DT_SDK_INFORMATION_INTERFACE_NAME, DT_SDK_INFORMATION_INTERFACE_ID)
+#define DT_TEST_SDK_INFORMATION_TUPLE DT_TEST_BUILD_JSON_TUPLE(DT_SDK_INFORMATION_COMPONENT_NAME, DT_SDK_INFORMATION_INTERFACE_ID)
 
 #define DT_TEST_INTERFACE_JSON_TUPLE_1 DT_TEST_BUILD_JSON_TUPLE(DT_TEST_COMPONENT_NAME_1, DT_TEST_INTERFACE_ID_1)
 #define DT_TEST_INTERFACE_JSON_TUPLE_2 DT_TEST_BUILD_JSON_TUPLE(DT_TEST_COMPONENT_NAME_2, DT_TEST_INTERFACE_ID_2)
@@ -195,14 +195,13 @@ static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 
 const char* test_dtInterfaceList_ExpectedMessageBody;
 
-DIGITALTWIN_CLIENT_RESULT impl_test_DT_InterfaceClient_CreateTelemetryMessage(const char* interfaceId, const char* componentName, const char* telemetryName, const unsigned char* messageData, size_t messageDataLen, IOTHUB_MESSAGE_HANDLE* telemetryMessageHandle)
+DIGITALTWIN_CLIENT_RESULT impl_test_DT_InterfaceClient_CreateTelemetryMessage(const char* interfaceId, const char* componentName, const unsigned char* messageData, size_t messageDataLen, IOTHUB_MESSAGE_HANDLE* telemetryMessageHandle)
 {
     // Verify that the JSON generated during message creation (and hence being passed to this function) is as expected
     //ASSERT_ARE_EQUAL(char_ptr, (const unsigned char*)test_dtInterfaceList_ExpectedMessageBody, messageData);
     (void)messageData;
     (void)interfaceId;
     (void)componentName;
-    (void)telemetryName;
     (void)messageDataLen;
     (void)telemetryMessageHandle;
     return DIGITALTWIN_CLIENT_OK;
@@ -393,7 +392,7 @@ static void set_expected_calls_for_DT_InterfaceList_RegisterInterfaces(int numIn
 
     for (int i = 0; i < numInterfacesToRegister; i++)
     {
-        STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
+        STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG));
     }
 }
 
@@ -404,7 +403,7 @@ static void test_register_interface_list(DIGITALTWIN_INTERFACE_CLIENT_HANDLE* dt
     set_expected_calls_for_DT_InterfaceList_RegisterInterfaces(numInterfacesToRegister);
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtInterfaces, numInterfacesToRegister, NULL, NULL);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtInterfaces, numInterfacesToRegister, 0, NULL, NULL);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, result, DIGITALTWIN_CLIENT_OK);
@@ -443,9 +442,9 @@ TEST_FUNCTION(DT_InterfaceList_RegisterInterfaces_last_interface_register_fails)
 
     STRICT_EXPECTED_CALL(gballoc_calloc(IGNORED_NUM_ARG, IGNORED_NUM_ARG));
 
-    STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG)).SetReturn(DIGITALTWIN_CLIENT_ERROR); // 3rd interface fails.
+    STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG));
+    STRICT_EXPECTED_CALL(DT_InterfaceClient_BindToClientHandle(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG)).SetReturn(DIGITALTWIN_CLIENT_ERROR); // 3rd interface fails.
 
     // After failure, expect 1st two interfaces to be unregistered
     STRICT_EXPECTED_CALL(DT_InterfaceClient_UnbindFromClientHandle(IGNORED_PTR_ARG));
@@ -453,7 +452,7 @@ TEST_FUNCTION(DT_InterfaceList_RegisterInterfaces_last_interface_register_fails)
     STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtTestInterfaceArray, 3, NULL, NULL);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtTestInterfaceArray, 3, 0, NULL, NULL);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR, result);
@@ -466,7 +465,7 @@ TEST_FUNCTION(DT_InterfaceList_RegisterInterfaces_last_interface_register_fails)
 TEST_FUNCTION(DT_InterfaceList_RegisterInterfaces_NULL_list_handle_fails)
 {
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(NULL, dtTestInterfaceArray, 1, NULL, NULL);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(NULL, dtTestInterfaceArray, 1, 0, NULL, NULL);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, result, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG);
@@ -493,7 +492,7 @@ TEST_FUNCTION(DT_InterfaceList_RegisterInterfaces_fail)
             umock_c_negative_tests_fail_call(i);
 
             //act
-            DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtTestInterfaceArray, 2, NULL, NULL);
+            DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtTestInterfaceArray, 2, 0, NULL, NULL);
 
             //assert
             ASSERT_ARE_NOT_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_OK, result, "Failure in test %lu", (unsigned long)i);
@@ -509,7 +508,7 @@ static DIGITALTWIN_INTERFACE_LIST_HANDLE create_DT_interface_list_and_bind(int n
 {
     DIGITALTWIN_INTERFACE_LIST_HANDLE h = create_DT_interface_list_for_test();
 
-    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtTestInterfaceArray, numInterfacesToRegister, NULL, NULL);
+    DIGITALTWIN_CLIENT_RESULT result = DT_InterfaceList_BindInterfaces(h, dtTestInterfaceArray, numInterfacesToRegister, 0, NULL, NULL);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, result, DIGITALTWIN_CLIENT_OK);
 
     umock_c_reset_all_calls();
@@ -884,8 +883,8 @@ static void set_expected_calls_for_DT_InterfaceList_CreateRegistrationMessage(in
     STRICT_EXPECTED_CALL(json_object_dotset_value(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_serialize_to_string(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_value_free(IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(DT_InterfaceClient_CreateTelemetryMessage(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG)).
-        CopyOutArgumentBuffer(6, &dtTestMessageHande, sizeof(dtTestMessageHande));
+    STRICT_EXPECTED_CALL(DT_InterfaceClient_CreateTelemetryMessage(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG)).
+        CopyOutArgumentBuffer(5, &dtTestMessageHande, sizeof(dtTestMessageHande));
     STRICT_EXPECTED_CALL(json_free_serialized_string(IGNORED_PTR_ARG));
 }
 

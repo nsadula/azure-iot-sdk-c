@@ -164,12 +164,12 @@ APP_DIGITALTWIN_REGISTRATION_STATUS appDigitalTwinRegistrationStatus = APP_DIGIT
 
 // Invokes DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync, which indicates to Azure IoT which DigitalTwin interfaces this device supports.
 // The DigitalTwin Handle *is not valid* until this operation has completed (as indicated by the callback DigitalTwinSampleDevice_RegisterDigitalTwinInterfacesAndWait being invoked).
-static DIGITALTWIN_CLIENT_RESULT DigitalTwinSampleDevice_LL_RegisterDigitalTwinInterfacesAndWait(DIGITALTWIN_DEVICE_CLIENT_LL_HANDLE digitaltwinDeviceClientLLHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* interfaceClientHandles, int numInterfaceClientHandles)
+static DIGITALTWIN_CLIENT_RESULT DigitalTwinSampleDevice_LL_RegisterDigitalTwinInterfacesAndWait(DIGITALTWIN_DEVICE_CLIENT_LL_HANDLE digitaltwinDeviceClientLLHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* interfaceClientHandles, int numInterfaceClientHandles, unsigned int dtDefaultInterfaceIndex)
 {
     DIGITALTWIN_CLIENT_RESULT result;
 
     // Give DigitalTwin interfaces to register.  DigitalTwin_DeviceClient_RegisterInterfacesAsync returns immediately
-    if ((result = DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync(digitaltwinDeviceClientLLHandle, DIGITALTWIN_SAMPLE_DEVICE_CAPABILITY_MODEL_ID, interfaceClientHandles, numInterfaceClientHandles, DigitalTwinSampleDevice_LL_InterfacesRegisteredCallback, &appDigitalTwinRegistrationStatus)) != DIGITALTWIN_CLIENT_OK)
+    if ((result = DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync(digitaltwinDeviceClientLLHandle, DIGITALTWIN_SAMPLE_DEVICE_CAPABILITY_MODEL_ID, interfaceClientHandles, numInterfaceClientHandles, dtDefaultInterfaceIndex, DigitalTwinSampleDevice_LL_InterfacesRegisteredCallback, &appDigitalTwinRegistrationStatus)) != DIGITALTWIN_CLIENT_OK)
     {
         LogError("DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync failed, error=<%s>", MU_ENUM_TO_STRING(DIGITALTWIN_CLIENT_RESULT, result));
     }
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
 #endif
     // Register the interface we've created with Azure IoT.  This call will block until interfaces
     // are successfully registered, we get a failure from server, or we timeout.
-    else if (DigitalTwinSampleDevice_LL_RegisterDigitalTwinInterfacesAndWait(digitaltwinDeviceClientLLHandle, interfaceClientHandles, DIGITALTWIN_SAMPLE_DEVICE_NUM_INTERFACES) != DIGITALTWIN_CLIENT_OK)
+    else if (DigitalTwinSampleDevice_LL_RegisterDigitalTwinInterfacesAndWait(digitaltwinDeviceClientLLHandle, interfaceClientHandles, DIGITALTWIN_SAMPLE_DEVICE_NUM_INTERFACES, DIGITALTWIN_SAMPLE_ENVIRONMENTAL_SENSOR_INDEX) != DIGITALTWIN_CLIENT_OK)
     {
         LogError("DigitalTwinSampleDevice_LL_RegisterDigitalTwinInterfacesAndWait failed");
     }

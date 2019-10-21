@@ -18,8 +18,7 @@ static const char* DT_JSON_INTERFACE_IDS_OBJECT_NAME = DT_JSON_MODEL_INFORMATION
 static const char* DT_JSON_CAPABILITY_MODEL_ID = DT_JSON_MODEL_INFORMATION "capabilityModelId";
 
 static const char* DT_MODEL_DISCOVERY_INTERFACE_ID = "urn:azureiot:ModelDiscovery:ModelInformation:1";
-static const char* DT_MODEL_DISCOVERY_INTERFACE_NAME = "urn_azureiot_ModelDiscovery_ModelInformation";
-static const char* DT_CAPABILITY_REPORT_INTERFACE_TELEMETRY_TYPE = "modelInformation";
+static const char* DT_MODEL_DISCOVERY_COMPONENT_NAME = "urn_azureiot_ModelDiscovery_ModelInformation";
 
 static const char* DT_SDK_INFORMATION_INTERFACE_ID = "urn:azureiot:Client:SDKInformation:1";
 
@@ -71,7 +70,13 @@ static void UnbindExistingInterfaceHandles(DT_INTERFACE_LIST* dtInterfaceList)
 
 // DT_InterfaceList_BindInterfaces clears out any existing interfaces already registered, indicates to underlying
 // DIGITALTWIN_INTERFACE_CLIENT_HANDLE's that they're being registered, and stores list.
-DIGITALTWIN_CLIENT_RESULT DT_InterfaceList_BindInterfaces(DIGITALTWIN_INTERFACE_LIST_HANDLE dtInterfaceListHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* dtInterfaces, unsigned int numDTInterfaces, DT_CLIENT_CORE_HANDLE dtClientCoreHandle, DT_LOCK_THREAD_BINDING* lockThreadBinding)
+DIGITALTWIN_CLIENT_RESULT DT_InterfaceList_BindInterfaces(
+    DIGITALTWIN_INTERFACE_LIST_HANDLE dtInterfaceListHandle,
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE* dtInterfaces,
+    unsigned int numDTInterfaces,
+    unsigned int dtDefaultInterfaceIndex,
+    DT_CLIENT_CORE_HANDLE dtClientCoreHandle,
+    DT_LOCK_THREAD_BINDING* lockThreadBinding)
 {
     DIGITALTWIN_CLIENT_RESULT result;
 
@@ -96,7 +101,13 @@ DIGITALTWIN_CLIENT_RESULT DT_InterfaceList_BindInterfaces(DIGITALTWIN_INTERFACE_
 
             for (i = 0; i < numDTInterfaces; i++)
             {
-                if ((result = DT_InterfaceClient_BindToClientHandle(dtInterfaces[i], dtClientCoreHandle, lockThreadBinding)) != DIGITALTWIN_CLIENT_OK)
+                bool isDefaultInterface = false;
+                if (i == dtDefaultInterfaceIndex)
+                {
+                    isDefaultInterface = true;
+                }
+
+                if ((result = DT_InterfaceClient_BindToClientHandle(dtInterfaces[i], dtClientCoreHandle, isDefaultInterface, lockThreadBinding)) != DIGITALTWIN_CLIENT_OK)
                 {
                     LogError("Cannot register DeviceTwin interface %d in list", i);
                     break;
@@ -309,13 +320,13 @@ static DIGITALTWIN_CLIENT_RESULT CreateDTInterfacesJson(DT_INTERFACE_LIST* dtInt
     }
     // The modelInformation interface is implemented by the DigitalTwin SDK itself
     // (it must be since it's what's used for interface registration).  Add it here.
-    else if (json_object_set_string(interfacesObject, DT_MODEL_DISCOVERY_INTERFACE_NAME, DT_MODEL_DISCOVERY_INTERFACE_ID) != JSONSuccess)
+    else if (json_object_set_string(interfacesObject, DT_MODEL_DISCOVERY_COMPONENT_NAME, DT_MODEL_DISCOVERY_INTERFACE_ID) != JSONSuccess)
     {
         LogError("json_object_set_string failed");
         result = DIGITALTWIN_CLIENT_ERROR_OUT_OF_MEMORY;
     }
     // The SDKInformation interface is also implemented directly by the DigitalTwin SDK.
-    else if (json_object_set_string(interfacesObject, DT_SDK_INFORMATION_INTERFACE_NAME, DT_SDK_INFORMATION_INTERFACE_ID) != JSONSuccess)
+    else if (json_object_set_string(interfacesObject, DT_SDK_INFORMATION_COMPONENT_NAME, DT_SDK_INFORMATION_INTERFACE_ID) != JSONSuccess)
     {
         LogError("json_object_set_string failed");
         result = DIGITALTWIN_CLIENT_ERROR_OUT_OF_MEMORY;
@@ -436,8 +447,7 @@ DIGITALTWIN_CLIENT_RESULT DT_InterfaceList_CreateRegistrationMessage(DIGITALTWIN
     {
         LogError("CreateMessageBodyForRegistration failed, error = %d", result);
     }
-    else if ((result = DT_InterfaceClient_CreateTelemetryMessage(DT_MODEL_DISCOVERY_INTERFACE_ID, DT_MODEL_DISCOVERY_INTERFACE_NAME, 
-                                                                 DT_CAPABILITY_REPORT_INTERFACE_TELEMETRY_TYPE,
+    else if ((result = DT_InterfaceClient_CreateTelemetryMessage(DT_MODEL_DISCOVERY_INTERFACE_ID, DT_MODEL_DISCOVERY_COMPONENT_NAME,
                                                                  (unsigned char *)messageBody, strlen(messageBody), messageHandle)) != DIGITALTWIN_CLIENT_OK)
     {
         LogError("DT_InterfaceClient_CreateTelemetryMessage failed, error = %d", result);

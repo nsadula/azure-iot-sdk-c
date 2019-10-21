@@ -36,6 +36,7 @@ IMPLEMENT_UMOCK_C_ENUM_TYPE(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_RESULT
 
 static DIGITALTWIN_INTERFACE_CLIENT_HANDLE testDTInterfacesToRegister[] = {DT_TEST_INTERFACE_HANDLE1, DT_TEST_INTERFACE_HANDLE2, DT_TEST_INTERFACE_HANDLE3 };
 static const int testDTInterfacesToRegisterLen = sizeof(testDTInterfacesToRegister) / sizeof(testDTInterfacesToRegister[0]);
+static const unsigned int testDTDefaultInterfacesIndex = 0;
 static void* dtTestDeviceRegisterInterfaceCallbackContext = (void*)0x1236;
 static const char* testDTDeviceCapabilityModel = "http://testDeviceCapabilityModel/1.0.0";
 
@@ -231,7 +232,7 @@ static void dtTestDeviceRegisterInterfaceCallback(DIGITALTWIN_CLIENT_RESULT dtIn
 
 static void set_expected_calls_for_DT_DeviceClient_LL_RegisterInterfacesAsync()
 {
-    STRICT_EXPECTED_CALL(DT_ClientCoreRegisterInterfacesAsync(IGNORED_PTR_ARG, testDTDeviceCapabilityModel, testDTInterfacesToRegister, testDTInterfacesToRegisterLen, dtTestDeviceRegisterInterfaceCallback, dtTestDeviceRegisterInterfaceCallbackContext));
+    STRICT_EXPECTED_CALL(DT_ClientCoreRegisterInterfacesAsync(IGNORED_PTR_ARG, testDTDeviceCapabilityModel, testDTInterfacesToRegister, testDTInterfacesToRegisterLen, testDTDefaultInterfacesIndex, dtTestDeviceRegisterInterfaceCallback, dtTestDeviceRegisterInterfaceCallbackContext));
 }
 
 TEST_FUNCTION(DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync_ok)
@@ -242,7 +243,7 @@ TEST_FUNCTION(DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync_ok)
 
     //act
     set_expected_calls_for_DT_DeviceClient_LL_RegisterInterfacesAsync();
-    result = DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync(h, testDTDeviceCapabilityModel, testDTInterfacesToRegister, testDTInterfacesToRegisterLen, dtTestDeviceRegisterInterfaceCallback, dtTestDeviceRegisterInterfaceCallbackContext);
+    result = DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync(h, testDTDeviceCapabilityModel, testDTInterfacesToRegister, testDTInterfacesToRegisterLen, testDTDefaultInterfacesIndex, dtTestDeviceRegisterInterfaceCallback, dtTestDeviceRegisterInterfaceCallbackContext);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, result, DIGITALTWIN_CLIENT_OK);
@@ -271,7 +272,7 @@ TEST_FUNCTION(DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync_fail)
         umock_c_negative_tests_fail_call(i);
 
         //act
-        result = DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync(h, testDTDeviceCapabilityModel, testDTInterfacesToRegister, testDTInterfacesToRegisterLen, dtTestDeviceRegisterInterfaceCallback, dtTestDeviceRegisterInterfaceCallbackContext);
+        result = DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync(h, testDTDeviceCapabilityModel, testDTInterfacesToRegister, testDTInterfacesToRegisterLen, testDTDefaultInterfacesIndex, dtTestDeviceRegisterInterfaceCallback, dtTestDeviceRegisterInterfaceCallbackContext);
         
         //assert
         ASSERT_ARE_NOT_EQUAL(DIGITALTWIN_CLIENT_RESULT, result, DIGITALTWIN_CLIENT_OK, "DigitalTwin_DeviceClient_LL_RegisterInterfacesAsync failure in test %lu", (unsigned long)i);
