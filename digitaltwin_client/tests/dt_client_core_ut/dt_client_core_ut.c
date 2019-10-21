@@ -634,7 +634,7 @@ static void set_expected_calls_for_DT_ClientCore_RegisterInterfacesAsync(int num
     STRICT_EXPECTED_CALL(DT_InterfaceClient_CheckNameValid(IGNORED_PTR_ARG, IGNORED_NUM_ARG));
     set_expected_calls_for_VerifyComponentsUnique(numInterfaces, componentNames);
     STRICT_EXPECTED_CALL(testBindingLock(IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(DT_InterfaceList_BindInterfaces(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(DT_InterfaceList_BindInterfaces(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(DT_InterfaceList_CreateRegistrationMessage(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(gballoc_calloc(IGNORED_NUM_ARG, IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(testBindingDTClientSendEventAsync(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
@@ -650,7 +650,7 @@ static DT_CLIENT_CORE_HANDLE test_register_interfaces_init(DT_CLIENT_CORE_HANDLE
     set_expected_calls_for_DT_ClientCore_RegisterInterfacesAsync(numInterfaces, componentNames);
     
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, (numInterfaces == 0) ? NULL : dtTestInterfaceArray, numInterfaces, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, (numInterfaces == 0) ? NULL : dtTestInterfaceArray, numInterfaces, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
     
     //assert
     ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
@@ -714,7 +714,7 @@ TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_three_interfaces_close_before
 TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_NULL_handle)
 {
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(NULL, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(NULL, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
     
     //assert
     ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
@@ -729,7 +729,7 @@ TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_NULL_capabilityModel)
     DT_CLIENT_CORE_HANDLE h = allocateDT_client_core_for_test();
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, NULL, dtTestInterfaceArray, 1, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, NULL, dtTestInterfaceArray, 1, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
     
     //assert
     ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
@@ -887,7 +887,7 @@ TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_multiple_calls_fail)
     set_expected_calls_for_VerifyComponentsUnique(1, dtTestComponentNamesArray);
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INTERFACE_ALREADY_REGISTERED, result);
@@ -979,7 +979,7 @@ TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_already_registering_close_bef
     set_expected_calls_for_VerifyComponentsUnique(1, dtTestComponentNamesArray);
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_REGISTRATION_PENDING, result);
@@ -999,7 +999,7 @@ TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_already_registering_close_aft
 	set_expected_calls_for_VerifyComponentsUnique(1, dtTestComponentNamesArray);
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
 
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_REGISTRATION_PENDING, result);
@@ -1035,7 +1035,7 @@ static void test_duplicate_interfaces(int numInterfaces, const char** componentN
 	set_expected_calls_for_VerifyComponentsUnique(numInterfaces, componentNames);
 
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, numInterfaces, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(h, testDTDeviceCapabilityModel, dtTestInterfaceArray, numInterfaces, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
     
     //assert
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_DUPLICATE_COMPONENTS, result);
@@ -1077,7 +1077,7 @@ TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_duplicate_interfaces_dups_sep
 TEST_FUNCTION(DT_ClientCoreRegisterInterfacesAsync_NULL_core_handle_fails)
 {
     //act
-    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(NULL, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
+    DIGITALTWIN_CLIENT_RESULT result = DT_ClientCoreRegisterInterfacesAsync(NULL, testDTDeviceCapabilityModel, dtTestInterfaceArray, 1, 0, testInterfaceRegisteredCallback, testDTRegisterInterfacesAsyncContext);
     ASSERT_ARE_EQUAL(DIGITALTWIN_CLIENT_RESULT, DIGITALTWIN_CLIENT_ERROR_INVALID_ARG, result);
 }
 

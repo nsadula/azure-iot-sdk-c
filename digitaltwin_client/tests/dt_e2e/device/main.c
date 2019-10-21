@@ -91,12 +91,12 @@ static void DT_E2E_InterfacesRegisteredCallback(DIGITALTWIN_CLIENT_RESULT dtInte
 // DT_E2E_RegisterDigitalTwinInterfacesAndWait invokes DigitalTwin_DeviceClient_RegisterInterfacesAsync, which indicates to Azure IoT which DigitalTwin interfaces this device supports.
 // The DigitalTwin Handle *is not valid* until this operation has completed (as indicated by the callback DT_E2E_InterfacesRegisteredCallback being invoked).
 //
-static DIGITALTWIN_CLIENT_RESULT DT_E2E_RegisterDigitalTwinInterfacesAndWait(DIGITALTWIN_DEVICE_CLIENT_HANDLE dtDeviceClientHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* interfaceClientHandles, int numInterfaceClientHandles)
+static DIGITALTWIN_CLIENT_RESULT DT_E2E_RegisterDigitalTwinInterfacesAndWait(DIGITALTWIN_DEVICE_CLIENT_HANDLE dtDeviceClientHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* interfaceClientHandles, int numInterfaceClientHandles, int dtDefaultInterfaceIndex)
 {
     DIGITALTWIN_CLIENT_RESULT result;
 
     // Give DigitalTwin interfaces to register.  DigitalTwin_DeviceClient_RegisterInterfacesAsync returns immediately
-    if ((result = DigitalTwin_DeviceClient_RegisterInterfacesAsync(dtDeviceClientHandle, DIGITALTWIN_E2E_DEVICE_CAPABILITY_MODEL_URI, interfaceClientHandles, numInterfaceClientHandles, DT_E2E_InterfacesRegisteredCallback, &appDigitalTwinRegistrationStatus)) != DIGITALTWIN_CLIENT_OK)
+    if ((result = DigitalTwin_DeviceClient_RegisterInterfacesAsync(dtDeviceClientHandle, DIGITALTWIN_E2E_DEVICE_CAPABILITY_MODEL_URI, interfaceClientHandles, numInterfaceClientHandles, dtDefaultInterfaceIndex, DT_E2E_InterfacesRegisteredCallback, &appDigitalTwinRegistrationStatus)) != DIGITALTWIN_CLIENT_OK)
     {
         LogError("DigitalTwin_DeviceClient_RegisterInterfacesAsync failed, error=<%s>", MU_ENUM_TO_STRING(DIGITALTWIN_CLIENT_RESULT, result));
     }
@@ -263,7 +263,7 @@ int main(int argc, char** argv)
         LogError("Could not allocate IoTHub Device handle");
         result = MU_FAILURE;
     }
-    else if (DT_E2E_RegisterDigitalTwinInterfacesAndWait(dtDeviceClientHandle, interfaceClientHandles, DIGITALTWIN_E2E_DEVICE_MAX_INTERFACES) != DIGITALTWIN_CLIENT_OK)
+    else if (DT_E2E_RegisterDigitalTwinInterfacesAndWait(dtDeviceClientHandle, interfaceClientHandles, DIGITALTWIN_E2E_DEVICE_MAX_INTERFACES, DIGITALTWIN_E2E_TELEMETRY_TEST_INDEX) != DIGITALTWIN_CLIENT_OK)
     {
         LogError("DT_E2E_RegisterDigitalTwinInterfacesAndWait failed");
         result = MU_FAILURE;

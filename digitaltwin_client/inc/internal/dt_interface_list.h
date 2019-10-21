@@ -24,7 +24,7 @@ typedef struct DT_INTERFACE_LIST* DIGITALTWIN_INTERFACE_LIST_HANDLE;
 
 MOCKABLE_FUNCTION(, DIGITALTWIN_INTERFACE_LIST_HANDLE, DigitalTwin_InterfaceList_Create);
 MOCKABLE_FUNCTION(, void, DT_InterfaceList_Destroy, DIGITALTWIN_INTERFACE_LIST_HANDLE, dtInterfaceListHandle);
-MOCKABLE_FUNCTION(, DIGITALTWIN_CLIENT_RESULT, DT_InterfaceList_BindInterfaces, DIGITALTWIN_INTERFACE_LIST_HANDLE, dtInterfaceListHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE*, dtInterfaces, unsigned int, numDTInterfaces, DT_CLIENT_CORE_HANDLE, dtClientCoreHandle, DT_LOCK_THREAD_BINDING*, lockThreadBinding);
+MOCKABLE_FUNCTION(, DIGITALTWIN_CLIENT_RESULT, DT_InterfaceList_BindInterfaces, DIGITALTWIN_INTERFACE_LIST_HANDLE, dtInterfaceListHandle, DIGITALTWIN_INTERFACE_CLIENT_HANDLE*, dtInterfaces, unsigned int, numDTInterfaces, unsigned int, dtDefaultInterfaceIndex, DT_CLIENT_CORE_HANDLE, dtClientCoreHandle, DT_LOCK_THREAD_BINDING*, lockThreadBinding);
 MOCKABLE_FUNCTION(, void, DT_InterfaceList_UnbindInterfaces, DIGITALTWIN_INTERFACE_LIST_HANDLE, dtInterfaceListHandle);
 MOCKABLE_FUNCTION(, void, DT_InterfaceList_RegistrationCompleteCallback, DIGITALTWIN_INTERFACE_LIST_HANDLE, dtInterfaceListHandle, DIGITALTWIN_CLIENT_RESULT, dtInterfaceStatus);
 MOCKABLE_FUNCTION(, DT_COMMAND_PROCESSOR_RESULT, DT_InterfaceList_InvokeCommand, DIGITALTWIN_INTERFACE_LIST_HANDLE, dtInterfaceListHandle, const char*, method_name, const unsigned char*, payload, size_t, size, unsigned char**, response, size_t*, response_size, int*, resultFromCommandCallback);

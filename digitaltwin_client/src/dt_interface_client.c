@@ -59,7 +59,7 @@ static const char DT_AsyncResultSchema[] = "asyncResult";
 static const char DT_SdkLanguage[] = "C";
 static const char DT_SdkVendor[] = "Microsoft";
   
-static const char DT_SdkInfoSchema[] = "{\"" DT_INTERFACE_PREFIX DT_SDK_INFORMATION_INTERFACE_NAME "\": "
+static const char DT_SdkInfoSchema[] = "{\"" DT_INTERFACE_PREFIX DT_SDK_INFORMATION_COMPONENT_NAME "\": "
                                             " { " DT_SDK_INFORMATION_LANGUAGE_PROPERTY DT_JSON_VALUE_STRING_BLOCK ","
                                                   DT_SDK_INFORMATION_VERSION_PROPERTY DT_JSON_VALUE_STRING_BLOCK ","
                                                   DT_SDK_INFORMATION_VENDOR_PROPERTY DT_JSON_VALUE_STRING_BLOCK "}"
@@ -83,6 +83,7 @@ typedef struct DT_INTERFACE_CLIENT_TAG
 {
     bool processingCallback;    // Whether we're in the middle of processing a callback or not.
     DT_INTERFACE_STATE interfaceState;
+    bool isDefaultInterface;
     DT_LOCK_THREAD_BINDING lockThreadBinding;
     // The remaining fields are read only after DT_InterfaceClientCore_Create and the callback registration.
     // Because they can't be modified(other than at create/delete time), they don't require lock when reading them.
@@ -441,6 +442,12 @@ static void SetInterfaceState(DT_INTERFACE_CLIENT* dtInterfaceClient, DT_INTERFA
     dtInterfaceClient->interfaceState = desiredState;
 }
 
+static void SetInterfaceAsDefault(DT_INTERFACE_CLIENT* dtInterfaceClient, bool isDefaultInterface)
+{
+    DigitalTwinLogInfo("DigitalTwin Interface : Set interface %s as default interface.", dtInterfaceClient->componentName);
+    dtInterfaceClient->isDefaultInterface = isDefaultInterface;
+}
+
 // DigitalTwin_InterfaceClient_Create initializes a DIGITALTWIN_INTERFACE_CLIENT_HANDLE
 DIGITALTWIN_CLIENT_RESULT DigitalTwin_InterfaceClient_Create(const char* interfaceId, const char* componentName, DIGITALTWIN_INTERFACE_REGISTERED_CALLBACK dtInterfaceRegisteredCallback, void* userInterfaceContext, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* dtInterfaceClient)
 {
@@ -585,7 +592,7 @@ static bool IsInterfaceReadyForDestruction(DT_INTERFACE_CLIENT* dtInterfaceClien
 }
 
 // DT_InterfaceClient_BindToClientHandle will establish the link between this DIGITALTWIN_INTERFACE_CLIENT_HANDLE with the DT_CLIENT_CORE_HANDLE that will use it.
-DIGITALTWIN_CLIENT_RESULT DT_InterfaceClient_BindToClientHandle(DIGITALTWIN_INTERFACE_CLIENT_HANDLE dtInterfaceClientHandle, DT_CLIENT_CORE_HANDLE dtClientCoreHandle, DT_LOCK_THREAD_BINDING* lockThreadBinding)
+DIGITALTWIN_CLIENT_RESULT DT_InterfaceClient_BindToClientHandle(DIGITALTWIN_INTERFACE_CLIENT_HANDLE dtInterfaceClientHandle, DT_CLIENT_CORE_HANDLE dtClientCoreHandle, bool isDefaultInterface, DT_LOCK_THREAD_BINDING* lockThreadBinding)
 {
     DT_INTERFACE_CLIENT* dtInterfaceClient = (DT_INTERFACE_CLIENT*)dtInterfaceClientHandle;
     DIGITALTWIN_CLIENT_RESULT result;
@@ -609,6 +616,7 @@ DIGITALTWIN_CLIENT_RESULT DT_InterfaceClient_BindToClientHandle(DIGITALTWIN_INTE
     else
     {
         SetInterfaceState(dtInterfaceClient, DT_INTERFACE_STATE_BOUND_TO_CLIENT_HANDLE);
+        SetInterfaceAsDefault(dtInterfaceClient, isDefaultInterface);
         dtInterfaceClient->dtClientCoreHandle = dtClientCoreHandle;
         memcpy(&dtInterfaceClient->lockThreadBinding, lockThreadBinding, sizeof(dtInterfaceClient->lockThreadBinding));
         dtInterfaceClient->lockThreadBinding.dtBindingLockHandle = lockHandle;
@@ -923,15 +931,15 @@ static DIGITALTWIN_CLIENT_RESULT CreateJsonForTelemetryMessage(const char* telem
 }
 
 // Allocates a properly setup IOTHUB_MESSAGE_HANDLE for processing onto IoTHub.
-DIGITALTWIN_CLIENT_RESULT DT_InterfaceClient_CreateTelemetryMessage(const char* interfaceId, const char* componentName, const char* telemetryName, const unsigned char* messageData, size_t messageDataLen, IOTHUB_MESSAGE_HANDLE* telemetryMessageHandle)
+DIGITALTWIN_CLIENT_RESULT DT_InterfaceClient_CreateTelemetryMessage(const char* interfaceId, const char* componentName, const unsigned char* messageData, size_t messageDataLen, IOTHUB_MESSAGE_HANDLE* telemetryMessageHandle)
 {
     DIGITALTWIN_CLIENT_RESULT result;
     IOTHUB_MESSAGE_RESULT iothubMessageResult;
 
-    if ((componentName == NULL) || (messageData == NULL) || (telemetryMessageHandle == NULL) || (messageDataLen == 0))
+    if ((messageData == NULL) || (telemetryMessageHandle == NULL) || (messageDataLen == 0))
     {
-        LogError("Invalid parameter(s): componentName=%p, messageData=%p, telemetryMessageHandle=%p, messageDataLen=%lu",
-			componentName, messageData, telemetryMessageHandle, (unsigned long)messageDataLen);
+        LogError("Invalid parameter(s): messageData=%p, telemetryMessageHandle=%p, messageDataLen=%lu",
+			messageData, telemetryMessageHandle, (unsigned long)messageDataLen);
         result = DIGITALTWIN_CLIENT_ERROR_INVALID_ARG;
     }
     else
@@ -946,19 +954,14 @@ DIGITALTWIN_CLIENT_RESULT DT_InterfaceClient_CreateTelemetryMessage(const char* 
             LogError("Cannot set property %s, error = %d", DT_INTERFACE_ID_PROPERTY, iothubMessageResult);
             result = DIGITALTWIN_CLIENT_ERROR;
         }
-        else if ((iothubMessageResult = IoTHubMessage_SetProperty(*telemetryMessageHandle, DT_INTERFACE_NAME_PROPERTY, componentName)) != IOTHUB_MESSAGE_OK)
+        else if ((componentName != NULL) && (iothubMessageResult = IoTHubMessage_SetProperty(*telemetryMessageHandle, DT_INTERFACE_NAME_PROPERTY, componentName)) != IOTHUB_MESSAGE_OK)
         {
             LogError("Cannot set property %s, error = %d", DT_INTERFACE_NAME_PROPERTY, iothubMessageResult);
             result = DIGITALTWIN_CLIENT_ERROR;
         }        
-        else if ((telemetryName != NULL) && ((iothubMessageResult = IoTHubMessage_SetProperty(*telemetryMessageHandle, DT_MESSAGE_SCHEMA_PROPERTY, telemetryName)) != IOTHUB_MESSAGE_OK))
-        {
-            LogError("Cannot set property %s, error = %d", DT_MESSAGE_SCHEMA_PROPERTY, iothubMessageResult);
-            result = DIGITALTWIN_CLIENT_ERROR;
-        }
         else if ((iothubMessageResult = IoTHubMessage_SetContentTypeSystemProperty(*telemetryMessageHandle, DT_JSON_MESSAGE_CONTENT_TYPE)) != IOTHUB_MESSAGE_OK)
         {
-            LogError("Cannot set property %s, error = %d", DT_MESSAGE_SCHEMA_PROPERTY, iothubMessageResult);
+            LogError("Cannot set property %s, error = %d", DT_JSON_MESSAGE_CONTENT_TYPE, iothubMessageResult);
             result = DIGITALTWIN_CLIENT_ERROR;
         }
         else
@@ -1040,7 +1043,13 @@ DIGITALTWIN_CLIENT_RESULT DigitalTwin_InterfaceClient_SendTelemetryAsync(DIGITAL
     }
     else
     {
-        if ((result = DT_InterfaceClient_CreateTelemetryMessage(NULL, dtInterfaceClient->componentName, NULL, messageData, messageDataLen, &telemetryMessageHandle)) != DIGITALTWIN_CLIENT_OK)
+        char* targetComponentName = NULL;
+        if (!dtInterfaceClient->isDefaultInterface)
+        {
+            targetComponentName = dtInterfaceClient->componentName;
+        }
+
+        if ((result = DT_InterfaceClient_CreateTelemetryMessage(NULL, targetComponentName, messageData, messageDataLen, &telemetryMessageHandle)) != DIGITALTWIN_CLIENT_OK)
         {
             LogError("Cannot create send telemetry message, error = %d", result);
             result = DIGITALTWIN_CLIENT_ERROR_OUT_OF_MEMORY;
@@ -1616,26 +1625,35 @@ DIGITALTWIN_CLIENT_RESULT DigitalTwin_InterfaceClient_UpdateAsyncCommandStatusAs
     {
         LogError("CreateJsonForTelemetryMessage failed, error = %d", result);
     }
-    else if ((result = DT_InterfaceClient_CreateTelemetryMessage(NULL, dtInterfaceClient->componentName, DT_AsyncResultSchema, (const unsigned char*)STRING_c_str(jsonToSend), strlen(STRING_c_str(jsonToSend)), &telemetryMessageHandle)) != DIGITALTWIN_CLIENT_OK)
-    {
-        LogError("Cannot create send telemetry message, error = %d", result);
-    }
-    else if ((result = DT_InterfaceClient_SetAsyncResponseProperties(telemetryMessageHandle, dtClientAsyncCommandUpdate)) != DIGITALTWIN_CLIENT_OK)
-    {
-        LogError("Cannot create send telemetry message, error = %d", result);
-    }
-    else if ((sendTelemetryCallbackContext = CreateInterfaceAsyncCommandUpdateCallbackContext(dtUpdateAsyncCommandCallback, userContextCallback)) == NULL)
-    {
-        LogError("Cannot create callback context");
-        result = DIGITALTWIN_CLIENT_ERROR_OUT_OF_MEMORY;
-    }
-    else if ((result = DT_ClientCoreSendTelemetryAsync(dtInterfaceClient->dtClientCoreHandle, dtInterfaceClientHandle, telemetryMessageHandle, sendTelemetryCallbackContext)) != DIGITALTWIN_CLIENT_OK)
-    {
-        LogError("DT_ClientCoreSendTelemetryAsync failed, error = %d", result);
-    }
     else
     {
-        result = DIGITALTWIN_CLIENT_OK;
+        char* targetComponentName = NULL;
+        if (!dtInterfaceClient->isDefaultInterface)
+        {
+            targetComponentName = dtInterfaceClient->componentName;
+        }
+
+        if ((result = DT_InterfaceClient_CreateTelemetryMessage(NULL, targetComponentName, (const unsigned char*)STRING_c_str(jsonToSend), strlen(STRING_c_str(jsonToSend)), &telemetryMessageHandle)) != DIGITALTWIN_CLIENT_OK)
+        {
+            LogError("Cannot create send telemetry message, error = %d", result);
+        }
+        else if ((result = DT_InterfaceClient_SetAsyncResponseProperties(telemetryMessageHandle, dtClientAsyncCommandUpdate)) != DIGITALTWIN_CLIENT_OK)
+        {
+            LogError("Cannot create send telemetry message, error = %d", result);
+        }
+        else if ((sendTelemetryCallbackContext = CreateInterfaceAsyncCommandUpdateCallbackContext(dtUpdateAsyncCommandCallback, userContextCallback)) == NULL)
+        {
+            LogError("Cannot create callback context");
+            result = DIGITALTWIN_CLIENT_ERROR_OUT_OF_MEMORY;
+        }
+        else if ((result = DT_ClientCoreSendTelemetryAsync(dtInterfaceClient->dtClientCoreHandle, dtInterfaceClientHandle, telemetryMessageHandle, sendTelemetryCallbackContext)) != DIGITALTWIN_CLIENT_OK)
+        {
+            LogError("DT_ClientCoreSendTelemetryAsync failed, error = %d", result);
+        }
+        else
+        {
+            result = DIGITALTWIN_CLIENT_OK;
+        }
     }
 
     if ((result != DIGITALTWIN_CLIENT_OK) && (sendTelemetryCallbackContext != NULL))

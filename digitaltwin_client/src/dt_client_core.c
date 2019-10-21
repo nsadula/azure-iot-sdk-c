@@ -854,7 +854,14 @@ static DIGITALTWIN_CLIENT_RESULT VerifyComponentsUnique(DIGITALTWIN_INTERFACE_CL
 
 // DT_ClientCoreRegisterInterfacesAsync updates the list of interfaces we're supporting and begins 
 // protocol update of server.
-DIGITALTWIN_CLIENT_RESULT DT_ClientCoreRegisterInterfacesAsync(DT_CLIENT_CORE_HANDLE dtClientCoreHandle, const char* deviceCapabilityModel, DIGITALTWIN_INTERFACE_CLIENT_HANDLE* dtInterfaces, unsigned int numDTInterfaces, DIGITALTWIN_INTERFACE_REGISTERED_CALLBACK dtInterfaceRegisteredCallback, void* userContextCallback)
+DIGITALTWIN_CLIENT_RESULT DT_ClientCoreRegisterInterfacesAsync(
+    DT_CLIENT_CORE_HANDLE dtClientCoreHandle,
+    const char* deviceCapabilityModel,
+    DIGITALTWIN_INTERFACE_CLIENT_HANDLE* dtInterfaces,
+    unsigned int numDTInterfaces,
+    unsigned int dtDefaultInterfaceIndex,
+    DIGITALTWIN_INTERFACE_REGISTERED_CALLBACK dtInterfaceRegisteredCallback,
+    void* userContextCallback)
 {
     DIGITALTWIN_CLIENT_RESULT result;
     DT_CLIENT_CORE* dtClientCore = (DT_CLIENT_CORE*)dtClientCoreHandle;
@@ -889,7 +896,7 @@ DIGITALTWIN_CLIENT_RESULT DT_ClientCoreRegisterInterfacesAsync(DT_CLIENT_CORE_HA
         LogError("Cannot register because interface is already registered");
         result = DIGITALTWIN_CLIENT_ERROR_INTERFACE_ALREADY_REGISTERED;
     }
-    else if ((result = DT_InterfaceList_BindInterfaces(dtClientCore->dtInterfaceListHandle, dtInterfaces, numDTInterfaces, dtClientCoreHandle, &dtClientCore->lockThreadBinding)) != DIGITALTWIN_CLIENT_OK)
+    else if ((result = DT_InterfaceList_BindInterfaces(dtClientCore->dtInterfaceListHandle, dtInterfaces, numDTInterfaces, dtDefaultInterfaceIndex, dtClientCoreHandle, &dtClientCore->lockThreadBinding)) != DIGITALTWIN_CLIENT_OK)
     {
         LogError("DT_InterfaceList_BindInterfaces failed, result = %d", result);
     }
