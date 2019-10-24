@@ -36,6 +36,9 @@ static const char DigitalTwinSampleEnvironmentalSensor_ComponentName[] = "sensor
 //
 static const char* DigitalTwinSampleEnvironmentalSensor_TemperatureTelemetry = "temp";
 static const char* DigitalTwinSampleEnvironmentalSensor_HumidityTelemetry = "humid";
+static const char* DigitalTwinSampleEnvironmentalSensor_LocationTelemetry = "location";
+static const char* DigitalTwinSampleEnvironmentalSensor_LocationTelemetry_Longitude = "longitude";
+static const char* DigitalTwinSampleEnvironmentalSensor_LocationTelemetry_Latitude = "latitude";
 
 
 //
@@ -590,7 +593,7 @@ static void DigitalTwinSampleEnvironmentalSensor_TelemetryCallback(DIGITALTWIN_C
     }
     else
     {
-        LogError("ENVIRONMENTAL_SENSOR_INTERFACE: DigitalTwin failed delivered telemetry message, error=<%s>", MU_ENUM_TO_STRING(DIGITALTWIN_CLIENT_RESULT,dtTelemetryStatus));
+        LogError("ENVIRONMENTAL_SENSOR_INTERFACE: DigitalTwin failed delivered telemetry message for <%s>, error=<%s>", (const char*)userContextCallback, MU_ENUM_TO_STRING(DIGITALTWIN_CLIENT_RESULT, dtTelemetryStatus));
     }
 }
 
@@ -605,17 +608,36 @@ DIGITALTWIN_CLIENT_RESULT DigitalTwinSampleEnvironmentalSensor_SendTelemetryMess
 
     float currentTemperature = 20.0f + ((float)rand() / RAND_MAX) * 15.0f;
     float currentHumidity = 60.0f + ((float)rand() / RAND_MAX) * 20.0f;
+    float currentLongitude = -124.0f + ((float)rand() / RAND_MAX) * 59.0f;
+    float currentLatitude = 24.0f + ((float)rand() / RAND_MAX) * 25.0f;
+    
+    char currentTemperatureMessage[128];
+    char currentHumidityMessage[128];
+    char currentLocationMessage[128];
 
-    char currentMessage[128];
+    sprintf(currentTemperatureMessage, "{\"%s\":%.3f}", DigitalTwinSampleEnvironmentalSensor_TemperatureTelemetry, currentTemperature);
+    sprintf(currentHumidityMessage, "{\"%s\":%.3f}", DigitalTwinSampleEnvironmentalSensor_HumidityTelemetry, currentHumidity);
+    sprintf(currentLocationMessage, "{\"%s\":{\"%s\":%.3f, \"%s\":%.3f}}", DigitalTwinSampleEnvironmentalSensor_LocationTelemetry,
+        DigitalTwinSampleEnvironmentalSensor_LocationTelemetry_Longitude, currentLongitude,
+        DigitalTwinSampleEnvironmentalSensor_LocationTelemetry_Latitude, currentLatitude);
 
-    sprintf(currentMessage, "{\"%s\":%.3f, \"%s\":%.3f}", 
-            DigitalTwinSampleEnvironmentalSensor_TemperatureTelemetry, currentTemperature,
-            DigitalTwinSampleEnvironmentalSensor_HumidityTelemetry, currentHumidity);
-
-    if ((result = DigitalTwin_InterfaceClient_SendTelemetryAsync(interfaceHandle, (unsigned char*)currentMessage, strlen(currentMessage),
-                                                                 DigitalTwinSampleEnvironmentalSensor_TelemetryCallback, NULL)) != DIGITALTWIN_CLIENT_OK)
+    if ((result = DigitalTwin_InterfaceClient_SendTelemetryAsync(interfaceHandle,
+        (unsigned char*)currentTemperatureMessage, strlen(currentTemperatureMessage), DigitalTwinSampleEnvironmentalSensor_TelemetryCallback,
+        (void*)DigitalTwinSampleEnvironmentalSensor_TemperatureTelemetry)) != DIGITALTWIN_CLIENT_OK)
     {
-        LogError("ENVIRONMENTAL_SENSOR_INTERFACE: DigitalTwin_InterfaceClient_SendTelemetryAsync failed for sending.");
+        LogError("ENVIRONMENTAL_SENSOR_INTERFACE: DigitalTwin_InterfaceClient_SendTelemetryAsync failed for sending %s", DigitalTwinSampleEnvironmentalSensor_TemperatureTelemetry);
+    }
+    else if ((result = DigitalTwin_InterfaceClient_SendTelemetryAsync(interfaceHandle,
+        (unsigned char*)currentHumidityMessage, strlen(currentHumidityMessage), DigitalTwinSampleEnvironmentalSensor_TelemetryCallback,
+        (void*)DigitalTwinSampleEnvironmentalSensor_HumidityTelemetry)) != DIGITALTWIN_CLIENT_OK)
+    {
+        LogError("ENVIRONMENTAL_SENSOR_INTERFACE: DigitalTwin_InterfaceClient_SendTelemetryAsync failed for sending %s", DigitalTwinSampleEnvironmentalSensor_HumidityTelemetry);
+    }
+    else if ((result = DigitalTwin_InterfaceClient_SendTelemetryAsync(interfaceHandle,
+        (unsigned char*)currentLocationMessage, strlen(currentLocationMessage), DigitalTwinSampleEnvironmentalSensor_TelemetryCallback,
+        (void*)DigitalTwinSampleEnvironmentalSensor_LocationTelemetry)) != DIGITALTWIN_CLIENT_OK)
+    {
+        LogError("ENVIRONMENTAL_SENSOR_INTERFACE: DigitalTwin_InterfaceClient_SendTelemetryAsync failed for sending %s", DigitalTwinSampleEnvironmentalSensor_LocationTelemetry);
     }
 
     return result;
